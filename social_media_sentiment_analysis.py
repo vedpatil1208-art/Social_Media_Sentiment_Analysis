@@ -89,28 +89,6 @@ plt.title("Reddit Sentiment Distribution")
 plt.ylabel("")
 plt.show()
 
-twitter = twitter.rename(columns={
-    "clean_text": "text",
-    "category": "sentiment"
-})
-
-reddit = reddit.rename(columns={
-    "clean_comment": "text",
-    "category": "sentiment"
-})
-
-twitter["platform"] = "Twitter"
-reddit["platform"] = "Reddit"
-
-combined = pd.concat(
-    [twitter[["text", "sentiment", "platform"]],
-     reddit[["text", "sentiment", "platform"]]],
-    ignore_index=True
-)
-
-print("Combined dataset:", combined.shape)
-display(combined.head())
-
 print("Missing values before cleaning:")
 print(combined.isnull().sum())
 
@@ -287,63 +265,6 @@ from sklearn.metrics import (
     confusion_matrix
 )
 
-nb_model = MultinomialNB()
-
-nb_model.fit(X_train_tfidf, y_train)
-
-print("Naive Bayes model trained successfully!")
-
-nb_predictions = nb_model.predict(X_test_tfidf)
-
-print("First 10 actual labels:")
-print(y_test[:10].values)
-
-print("\nFirst 10 predicted labels:")
-print(nb_predictions[:10])
-
-nb_accuracy = accuracy_score(y_test, nb_predictions)
-
-nb_precision = precision_score(
-    y_test, nb_predictions, average="weighted"
-)
-
-nb_recall = recall_score(
-    y_test, nb_predictions, average="weighted"
-)
-
-nb_f1 = f1_score(
-    y_test, nb_predictions, average="weighted"
-)
-
-print("NAIVE BAYES RESULTS")
-print("-------------------")
-print("Accuracy:", round(nb_accuracy * 100, 2), "%")
-print("Precision:", round(nb_precision, 4))
-print("Recall:", round(nb_recall, 4))
-print("F1 Score:", round(nb_f1, 4))
-
-print(classification_report(
-    y_test,
-    nb_predictions,
-    target_names=["Negative", "Neutral", "Positive"]
-))
-
-plt.figure(figsize=(7, 5))
-
-sns.heatmap(
-    confusion_matrix(y_test, nb_predictions),
-    annot=True,
-    fmt="d",
-    cmap="Blues",
-    xticklabels=["Negative", "Neutral", "Positive"],
-    yticklabels=["Negative", "Neutral", "Positive"]
-)
-
-plt.xlabel("Predicted Sentiment")
-plt.ylabel("Actual Sentiment")
-plt.title("Naive Bayes Confusion Matrix")
-plt.show()
-
 """### Algorithm 1: Multinomial Naive Bayes
 
 Multinomial Naive Bayes is a supervised classification algorithm based on Bayes' Theorem. It is commonly used in text classification tasks.
@@ -362,13 +283,6 @@ The model calculates the probability of each sentiment category and selects the 
 
 **Evaluation:** The model is evaluated using accuracy, precision, recall, F1-score and a confusion matrix.
 """
-
-from sklearn.linear_model import LogisticRegression
-
-lr_model = LogisticRegression(
-    max_iter=1000,
-    random_state=42
-)
 
 lr_model.fit(X_train_tfidf, y_train)
 
@@ -428,10 +342,6 @@ lr_model = LogisticRegression(
 )
 
 print("Logistic Regression model created successfully!")
-
-lr_model.fit(X_train_tfidf, y_train)
-
-print("Logistic Regression model trained successfully!")
 
 lr_predictions = lr_model.predict(X_test_tfidf)
 
@@ -622,4 +532,271 @@ from google.colab import files
 
 files.download("sentiment_model.pkl")
 files.download("tfidf_vectorizer.pkl")
+
+# Commented out IPython magic to ensure Python compatibility.
+# 
+# %%writefile app.py
+# 
+# import streamlit as st
+# import joblib
+# import re
+# import nltk
+# import plotly.express as px
+# from nltk.corpus import stopwords
+# 
+# # Download stopwords to reproduce training preprocessing
+# nltk.download("stopwords", quiet=True)
+# stop_words = set(stopwords.words("english"))
+# stop_words -= {"not", "no", "nor", "never"}
+# 
+# # Page configuration
+# st.set_page_config(
+#     page_title="SentimentAI",
+#     page_icon="💬",
+#     layout="wide"
+# )
+# 
+# # Custom styling
+# st.markdown("""
+# <style>
+# .stApp {
+#     background: #0e1117;
+#     color: white;
+# }
+# .title {
+#     font-size: 42px;
+#     font-weight: 800;
+#     color: #ffffff;
+# }
+# .subtitle {
+#     color: #9ca3af;
+#     font-size: 16px;
+# }
+# .result {
+#     padding: 22px;
+#     border-radius: 14px;
+#     background: #1e293b;
+#     border: 1px solid #334155;
+# }
+# </style>
+# """, unsafe_allow_html=True)
+# 
+# # Load trained model and vectorizer
+# @st.cache_resource
+# def load_models():
+#     model = joblib.load("sentiment_model.pkl")
+#     vectorizer = joblib.load("tfidf_vectorizer.pkl")
+#     return model, vectorizer
+# 
+# model, vectorizer = load_models()
+# 
+# # Same preprocessing used during model training
+# def preprocess_text(text):
+#     text = str(text).lower()
+#     text = re.sub(r"http\S+|www\S+", "", text)
+#     text = re.sub(r"@\w+", "", text)
+#     text = re.sub(r"#", "", text)
+#     text = re.sub(r"[^a-z\s]", "", text)
+#     text = re.sub(r"\s+", " ", text)
+#     text = text.strip()
+# 
+#     words = text.split()
+#     words = [word for word in words if word not in stop_words]
+# 
+#     return " ".join(words)
+# 
+# # Header
+# st.markdown(
+#     '<div class="title">💬 SentimentAI</div>',
+#     unsafe_allow_html=True
+# )
+# 
+# st.markdown(
+#     '<div class="subtitle">Social Media Sentiment Analysis Using Machine Learning</div>',
+#     unsafe_allow_html=True
+# )
+# 
+# st.divider()
+# 
+# # Sidebar
+# st.sidebar.title("Navigation")
+# page = st.sidebar.radio(
+#     "Choose a section",
+#     ["Sentiment Analyzer", "Model Performance", "About Project"]
+# )
+# 
+# labels = {
+#     -1: "Negative",
+#     0: "Neutral",
+#     1: "Positive"
+# }
+# 
+# # Sentiment analyzer
+# if page == "Sentiment Analyzer":
+# 
+#     st.header("Analyze Your Social Media Text")
+# 
+#     user_text = st.text_area(
+#         "Enter a tweet, Reddit comment or social media post",
+#         placeholder="Example: I absolutely love this product!",
+#         height=150
+#     )
+# 
+#     if st.button("🔍 Analyze Sentiment", use_container_width=True):
+# 
+#         if not user_text.strip():
+#             st.warning("Please enter some text.")
+# 
+#         else:
+#             cleaned_text = preprocess_text(user_text)
+# 
+#             if not cleaned_text:
+#                 st.warning("Please enter meaningful English text.")
+#             else:
+#                 text_vector = vectorizer.transform([cleaned_text])
+#                 prediction = model.predict(text_vector)[0]
+#                 sentiment = labels[int(prediction)]
+# 
+#                 probabilities = model.predict_proba(text_vector)[0]
+#                 confidence = max(probabilities) * 100
+# 
+#                 st.divider()
+#                 st.subheader("Prediction Result")
+# 
+#                 colors = {
+#                     "Positive": "🟢",
+#                     "Negative": "🔴",
+#                     "Neutral": "🟡"
+#                 }
+# 
+#                 st.markdown(
+#                     f'<div class="result"><h2>{colors[sentiment]} '
+#                     f'{sentiment}</h2><p>Model confidence: '
+#                     f'{confidence:.2f}%</p></div>',
+#                     unsafe_allow_html=True
+#                 )
+# 
+#                 st.subheader("Sentiment Probability")
+# 
+#                 probability_data = {
+#                     labels[int(label)]: float(probability) * 100
+#                     for label, probability in zip(
+#                         model.classes_, probabilities
+#                     )
+#                 }
+# 
+#                 fig = px.bar(
+#                     x=list(probability_data.keys()),
+#                     y=list(probability_data.values()),
+#                     color=list(probability_data.keys()),
+#                     labels={
+#                         "x": "Sentiment",
+#                         "y": "Probability (%)"
+#                     },
+#                     title="Prediction Probability by Sentiment"
+#                 )
+# 
+#                 fig.update_layout(
+#                     template="plotly_dark",
+#                     showlegend=False,
+#                     yaxis_range=[0, 100]
+#                 )
+# 
+#                 st.plotly_chart(fig, use_container_width=True)
+# 
+#                 with st.expander("View processed text"):
+#                     st.write(cleaned_text)
+# 
+# # Model performance
+# elif page == "Model Performance":
+# 
+#     st.header("Machine Learning Model Performance")
+# 
+#     col1, col2 = st.columns(2)
+# 
+#     col1.metric("Best Model", "Logistic Regression")
+#     col2.metric("Accuracy", "89.85%")
+# 
+#     st.subheader("Comparison of ML Algorithms")
+# 
+#     comparison = {
+#         "Model": [
+#             "Naive Bayes",
+#             "Logistic Regression",
+#             "Decision Tree"
+#         ],
+#         "Accuracy": [72.39, 89.85, 64.02]
+#     }
+# 
+#     fig = px.bar(
+#         comparison,
+#         x="Model",
+#         y="Accuracy",
+#         title="Model Accuracy Comparison",
+#         text="Accuracy"
+#     )
+# 
+#     fig.update_layout(
+#         template="plotly_dark",
+#         yaxis_range=[0, 100]
+#     )
+# 
+#     st.plotly_chart(fig, use_container_width=True)
+# 
+#     st.info(
+#         "Logistic Regression achieved the highest accuracy "
+#         "in this experiment."
+#     )
+# 
+# # About project
+# elif page == "About Project":
+# 
+#     st.header("About SentimentAI")
+# 
+#     st.write("""
+#     SentimentAI is a machine learning project that analyzes
+#     social media text and classifies it into three categories.
+# 
+#     **Sentiment categories**
+#     - Positive
+#     - Negative
+#     - Neutral
+# 
+#     **Dataset**
+#     - Twitter
+#     - Reddit
+# 
+#     **Algorithms**
+#     - Multinomial Naive Bayes
+#     - Logistic Regression
+#     - Decision Tree Classifier
+# 
+#     **Feature extraction**
+#     - TF-IDF Vectorization
+# 
+#     **Best-performing model**
+#     - Logistic Regression
+#     - Accuracy: 89.85%
+#     """)
+# 
+#     st.caption("Developed as a Machine Learning academic project.")
+#
+
+# Commented out IPython magic to ensure Python compatibility.
+# %%writefile requirements.txt
+# streamlit
+# scikit-learn
+# pandas
+# numpy
+# joblib
+# plotly
+# nltk
+
+import os
+
+print(os.listdir())
+
+!streamlit run app.py --server.port 8501 --server.address 0.0.0.0 > streamlit.log 2>&1 &
+
+!npm install -g localtunnel
 
